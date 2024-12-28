@@ -1,4 +1,5 @@
 <?php
+session_start();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $conn = new mysqli('localhost', 'root', '', 'sinergi_a');
     if ($conn->connect_error) {
@@ -17,10 +18,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     foreach ($data as $index => $row) {
+        $id_gedung = $row['id_gedung'] ?? null;
+        $id_tower = $row['id_tower'] ?? null;
+        $id_lift = $row['id_lift'] ?? null;
         $id_komponen = $row['komponen'] ?? null;
         $id_temuan = $row['temuan'] ?? null;
         $id_solusi = $row['solusi'] ?? null;
-        $prioritas = $row['prioritas'] ?? null;
+        $prioritasText = $row['prioritasText'] ?? null;
         $keterangan = $row['keterangan'] ?? null;
         $fotoPath = null;
 
@@ -37,15 +41,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Simpan data ke database
         $query = $conn->prepare(
-            "INSERT INTO audit_komponen (id_komponen, id_temuan, id_solusi, prioritas, keterangan, foto_bukti) VALUES (?, ?, ?, ?, ?, ?)"
+            "INSERT INTO audit_komponen (id_gedung,id_tower,id_lift,id_komponen, id_temuan, id_solusi, prioritas, keterangan, foto_bukti) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
-        $query->bind_param("iiiiss", $id_komponen, $id_temuan, $id_solusi, $prioritas, $keterangan, $fotoPath);
+        $query->bind_param("iiiiiisss", $id_gedung, $id_tower, $id_lift, $id_komponen, $id_temuan, $id_solusi, $prioritasText, $keterangan, $fotoPath);
 
         if (!$query->execute()) {
             echo json_encode(['status' => 'error', 'message' => 'Gagal menyimpan data: ' . $query->error]);
             exit;
         }
     }
-
+    session_destroy();
     echo json_encode(['status' => 'success', 'message' => 'Data berhasil disimpan.']);
 }

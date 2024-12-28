@@ -2,8 +2,11 @@
 // Koneksi ke database
 include '../../Koneksi/Koneksi.php';
 
+session_start();
 
-
+$id_gedung = (int) $_SESSION['id_gedung'];
+$id_tower = (int) $_SESSION['id_tower'];
+$id_lift = (int) $_GET['id_lift'];
 
 // Query untuk mengambil data komponen dari tabel master_komponen
 $sql_komponen = "SELECT id_komponen, nama_komponen FROM komponen";
@@ -43,9 +46,9 @@ $temuan_result = $conn->query($temuan_query);
     <p class="text-center mt-0 mb-4 text-muted small">Selamat Menjalankan Tugas Auditnya</p>
 
     <form id="komponenForm" action="proses_formulir_komponen.php" method="POST" enctype="multipart/form-data">
-      <input type="hidden" name="id_lift" value="<?php echo htmlspecialchars($id_lift); ?>">
-      <input type="hidden" name="id_tower" value="<?php echo htmlspecialchars($id_tower); ?>">
-      <input type="hidden" name="id_gedung" value="<?php echo htmlspecialchars($id_gedung); ?>">
+      <input type="hidden" id="id_lift" name="id_lift" value="<?php echo $id_lift; ?>">
+      <input type="hidden" id="id_tower" name="id_tower" value="<?php echo $id_tower; ?>">
+      <input type="hidden" id="id_gedung" name="id_gedung" value="<?php echo $id_gedung; ?>">
       <div class="mt-3">
         <div class="form-komponen">
           <div class="card">
@@ -59,14 +62,14 @@ $temuan_result = $conn->query($temuan_query);
                   <select id="komponen" name="id_komponen" class="form-select select2 shadow-sm mb-4" required>
                     <option value="">Pilih Komponen</option>
                     <?php
-                                        if ($result_komponen->num_rows > 0) {
-                                            while ($row = $result_komponen->fetch_assoc()) {
-                                                echo '<option value="' . htmlspecialchars($row['id_komponen']) . '">' . htmlspecialchars($row['nama_komponen']) . '</option>';
-                                            }
-                                        } else {
-                                            echo '<option value="">Tidak ada komponen tersedia</option>';
-                                        }
-                                        ?>
+                    if ($result_komponen->num_rows > 0) {
+                      while ($row = $result_komponen->fetch_assoc()) {
+                        echo '<option value="' . htmlspecialchars($row['id_komponen']) . '">' . htmlspecialchars($row['nama_komponen']) . '</option>';
+                      }
+                    } else {
+                      echo '<option value="">Tidak ada komponen tersedia</option>';
+                    }
+                    ?>
                   </select>
                 </div>
 
@@ -76,10 +79,10 @@ $temuan_result = $conn->query($temuan_query);
                   <select id="temuan" name="id_temuan" class="form-select select2 shadow-sm mb-4" required>
                     <option value="">Pilih Temuan</option>
                     <?php
-                                        while ($row = $temuan_result->fetch_assoc()) {
-                                            echo "<option value='" . htmlspecialchars($row['id_temuan']) . "'>" . htmlspecialchars($row['nama_temuan']) . "</option>";
-                                        }
-                                        ?>
+                    while ($row = $temuan_result->fetch_assoc()) {
+                      echo "<option value='" . htmlspecialchars($row['id_temuan']) . "'>" . htmlspecialchars($row['nama_temuan']) . "</option>";
+                    }
+                    ?>
                   </select>
                 </div>
 
@@ -89,10 +92,10 @@ $temuan_result = $conn->query($temuan_query);
                   <select id="solusi" name="id_solusi" class="form-select select2 shadow-sm mb-4" required>
                     <option value="">Pilih Solusi</option>
                     <?php
-                                        while ($row = $solusi_result->fetch_assoc()) {
-                                            echo "<option value='" . htmlspecialchars($row['id_solusi']) . "'>" . htmlspecialchars($row['nama_solusi']) . "</option>";
-                                        }
-                                        ?>
+                    while ($row = $solusi_result->fetch_assoc()) {
+                      echo "<option value='" . htmlspecialchars($row['id_solusi']) . "'>" . htmlspecialchars($row['nama_solusi']) . "</option>";
+                    }
+                    ?>
                   </select>
                 </div>
 
@@ -166,9 +169,14 @@ $temuan_result = $conn->query($temuan_query);
       const tableBody = document.querySelector("#temporaryTable tbody");
       const addToTableBtn = document.querySelector("#addToTable");
       const saveDataBtn = document.querySelector("#saveData");
+
       let dataAll = [];
 
       addToTableBtn.addEventListener("click", () => {
+
+        const id_lift = document.querySelector("#id_lift").value;
+        const id_gedung = document.querySelector("#id_gedung").value;
+        const id_tower = document.querySelector("#id_tower").value;
         const komponen = document.querySelector("#komponen").value;
         const komponenText = document.querySelector("#komponen option:checked").textContent;
         const temuan = document.querySelector("#temuan").value;
@@ -183,11 +191,14 @@ $temuan_result = $conn->query($temuan_query);
 
 
         const data = {
-          komponen: komponen,
-          temuan: temuan,
-          solusi: solusi,
-          prioritasText: prioritasText,
-          keterangan: keterangan,
+          id_lift,
+          id_gedung,
+          id_tower,
+          komponen,
+          temuan,
+          solusi,
+          prioritasText,
+          keterangan,
           foto: fotoFile
         };
 
@@ -219,10 +230,13 @@ $temuan_result = $conn->query($temuan_query);
 
         const formData = new FormData();
         dataAll.forEach((row, index) => {
+          formData.append(`data[${index}][id_lift]`, row.id_lift);
+          formData.append(`data[${index}][id_gedung]`, row.id_gedung);
+          formData.append(`data[${index}][id_tower]`, row.id_tower);
           formData.append(`data[${index}][komponen]`, row.komponen);
           formData.append(`data[${index}][temuan]`, row.temuan);
           formData.append(`data[${index}][solusi]`, row.solusi);
-          formData.append(`data[${index}][prioritas]`, row.prioritasText);
+          formData.append(`data[${index}][prioritasText]`, row.prioritasText);
           formData.append(`data[${index}][keterangan]`, row.keterangan)
 
           if (row.foto) {
@@ -243,6 +257,7 @@ $temuan_result = $conn->query($temuan_query);
             if (result.status === "success") {
               tableBody.innerHTML = "";
             }
+
           })
           .catch((error) => {
             console.error(error);
@@ -251,7 +266,6 @@ $temuan_result = $conn->query($temuan_query);
       });
     });
     </script>
-
 
 
 
