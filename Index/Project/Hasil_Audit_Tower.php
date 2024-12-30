@@ -4,54 +4,54 @@ session_start();
 // Pastikan id_gedung ada di URL
 if (isset($_GET['id_gedung'])) {
 
-    $_SESSION['id_gedung'] = $_GET['id_gedung'];
-    $id_gedung = $_GET['id_gedung'];
+  $_SESSION['id_gedung'] = $_GET['id_gedung'];
+  $id_gedung = $_GET['id_gedung'];
 
-    // Query untuk mengambil nama gedung dan project_code berdasarkan id_gedung
-    $gedungQuery = "SELECT nama_gedung, project_code FROM gedung WHERE id_gedung = ?";
-    $stmtGedung = $conn->prepare($gedungQuery);
-    $stmtGedung->bind_param('i', $id_gedung);
-    $stmtGedung->execute();
-    $resultGedung = $stmtGedung->get_result();
+  // Query untuk mengambil nama gedung dan project_code berdasarkan id_gedung
+  $gedungQuery = "SELECT nama_gedung, project_code FROM gedung WHERE id_gedung = ?";
+  $stmtGedung = $conn->prepare($gedungQuery);
+  $stmtGedung->bind_param('i', $id_gedung);
+  $stmtGedung->execute();
+  $resultGedung = $stmtGedung->get_result();
 
-    // Periksa jika nama gedung dan project_code ditemukan
-    if ($resultGedung->num_rows > 0) {
-        $rowGedung = $resultGedung->fetch_assoc();
-        $namaGedung = $rowGedung['nama_gedung'];
-        $projectCode = $rowGedung['project_code'];
-    } else {
-        $namaGedung = "Nama Gedung Tidak Ditemukan"; // Jika nama gedung tidak ditemukan
-        $projectCode = "Project Code Tidak Ditemukan"; // Jika project_code tidak ditemukan
-    }
+  // Periksa jika nama gedung dan project_code ditemukan
+  if ($resultGedung->num_rows > 0) {
+    $rowGedung = $resultGedung->fetch_assoc();
+    $namaGedung = $rowGedung['nama_gedung'];
+    $projectCode = $rowGedung['project_code'];
+  } else {
+    $namaGedung = "Nama Gedung Tidak Ditemukan"; // Jika nama gedung tidak ditemukan
+    $projectCode = "Project Code Tidak Ditemukan"; // Jika project_code tidak ditemukan
+  }
 
-    // Tentukan jumlah data per halaman
-    $limit = 10;
+  // Tentukan jumlah data per halaman
+  $limit = 10;
 
-    // Menghitung jumlah total data
-    $countQuery = "SELECT COUNT(*) as total FROM audit_tower WHERE id_gedung = ?";
-    $stmtCount = $conn->prepare($countQuery);
-    $stmtCount->bind_param('i', $id_gedung);
-    $stmtCount->execute();
-    $resultCount = $stmtCount->get_result();
-    $rowCount = $resultCount->fetch_assoc();
-    $totalData = $rowCount['total'];
+  // Menghitung jumlah total data
+  $countQuery = "SELECT COUNT(*) as total FROM audit_tower WHERE id_gedung = ?";
+  $stmtCount = $conn->prepare($countQuery);
+  $stmtCount->bind_param('i', $id_gedung);
+  $stmtCount->execute();
+  $resultCount = $stmtCount->get_result();
+  $rowCount = $resultCount->fetch_assoc();
+  $totalData = $rowCount['total'];
 
-    // Hitung total halaman
-    $totalPages = ceil($totalData / $limit);
+  // Hitung total halaman
+  $totalPages = ceil($totalData / $limit);
 
-    // Tentukan halaman saat ini
-    $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
-    if ($page < 1) {
-        $page = 1;
-    } elseif ($page > $totalPages) {
-        $page = $totalPages;
-    }
+  // Tentukan halaman saat ini
+  $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+  if ($page < 1) {
+    $page = 1;
+  } elseif ($page > $totalPages) {
+    $page = $totalPages;
+  }
 
-    // Hitung posisi data yang akan ditampilkan
-    $offset = ($page - 1) * $limit;
+  // Hitung posisi data yang akan ditampilkan
+  $offset = ($page - 1) * $limit;
 
-    // Query untuk mengambil data tower berdasarkan id_gedung dan paging
-    $query = "
+  // Query untuk mengambil data tower berdasarkan id_gedung dan paging
+  $query = "
     SELECT
         t.id_tower,
         t.nama_tower,
@@ -64,13 +64,13 @@ if (isset($_GET['id_gedung'])) {
     LIMIT ?, ?
     ";
 
-    // Persiapkan dan jalankan query untuk data tower
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param('iii', $id_gedung, $offset, $limit);
-    $stmt->execute();
-    $result = $stmt->get_result();
+  // Persiapkan dan jalankan query untuk data tower
+  $stmt = $conn->prepare($query);
+  $stmt->bind_param('iii', $id_gedung, $offset, $limit);
+  $stmt->execute();
+  $result = $stmt->get_result();
 } else {
-    echo "ID Gedung tidak ditemukan.";
+  echo "ID Gedung tidak ditemukan.";
 }
 ?>
 
@@ -178,8 +178,11 @@ if (isset($_GET['id_gedung'])) {
 
     <div class="btn-group btn-sm mb-3" role="group" aria-label="Export Buttons">
       <!-- Tombol Export Excel -->
-      <button id="exportExcel" class="btn btn-success btn-sm" title="Export to Excel"><i
-          class="fas fa-file-excel"></i></button>
+      <a href="../../../SINERGI/export-excel/test.php?id_gedung=<?= $id_gedung ?>">
+        <button id="exportExcel" class="btn btn-success btn-sm" title="Export to Excel"><i
+            class="fas fa-file-excel"></i></button>
+      </a>
+
       <!-- Tombol Export Word -->
       <button id="exportWord" class="btn btn-primary btn-sm" title="Export to Word"><i class="fas fa-file-word"></i>
       </button>
@@ -192,10 +195,11 @@ if (isset($_GET['id_gedung'])) {
 
 
     <script>
-    document.getElementById("exportExcel").addEventListener("click", function() {
-      alert("Export to Excel clicked!");
-      // Tambahkan logika untuk ekspor Excel
-    });
+    // document.getElementById("exportExcel").addEventListener("click", function() {
+    //   window.location.href = "./export-excel/test.php"; // Redirect ke file PHP yang akan mengekspor <Excel></Excel>
+    //   // Tambahkan logika untuk ekspor Excel
+    // });
+
 
     document.getElementById("exportWord").addEventListener("click", function() {
       alert("Export to Word clicked!");
@@ -223,44 +227,44 @@ if (isset($_GET['id_gedung'])) {
         </thead>
         <tbody>
           <?php
-                        if ($result->num_rows > 0) {
-                            $counter = 1; // Variabel untuk menghitung nomor urut
-                            while ($row = $result->fetch_assoc()) {
-                                echo '<tr id="row-' . htmlspecialchars($row['id_tower']) . '" class="align-middle">';
+            if ($result->num_rows > 0) {
+              $counter = 1; // Variabel untuk menghitung nomor urut
+              while ($row = $result->fetch_assoc()) {
+                echo '<tr id="row-' . htmlspecialchars($row['id_tower']) . '" class="align-middle">';
 
-                                // Tombol Detail
-                                echo '<td class="py-2 px-2 text-center">';
-                                echo '<a href="Hasil_Audit.php?id_tower=' . htmlspecialchars($row['id_tower']) . '" class="btn btn-info btn-sm" data-id="' . htmlspecialchars($row['id_tower']) . '" title="Detail">';
-                                echo '<i class="bi bi-eye"></i>';
-                                echo '</a>';
-                                echo "<button class='btn btn-danger btn-sm ms-1' data-bs-toggle='modal' data-bs-target='#hapusModal' onclick='setHapusId(" . $row['id_tower'] . ")'>";
-                                echo "<i class='bi bi-trash'></i>"; // Ikon hapus
-                                echo "</button>";
-                                echo '</td>';
+                // Tombol Detail
+                echo '<td class="py-2 px-2 text-center">';
+                echo '<a href="Hasil_Audit.php?id_tower=' . htmlspecialchars($row['id_tower']) . '" class="btn btn-info btn-sm" data-id="' . htmlspecialchars($row['id_tower']) . '" title="Detail">';
+                echo '<i class="bi bi-eye"></i>';
+                echo '</a>';
+                echo "<button class='btn btn-danger btn-sm ms-1' data-bs-toggle='modal' data-bs-target='#hapusModal' onclick='setHapusId(" . $row['id_tower'] . ")'>";
+                echo "<i class='bi bi-trash'></i>"; // Ikon hapus
+                echo "</button>";
+                echo '</td>';
 
-                                // Nomor urut otomatis
-                                echo '<td class="py-2 px-2 small">' . $counter++ . '</td>';
+                // Nomor urut otomatis
+                echo '<td class="py-2 px-2 small">' . $counter++ . '</td>';
 
-                                // Data lain (Nama Tower, PIC, Jumlah Lantai)
-                                echo '<td class="py-2 px-2 small">' . htmlspecialchars($row['nama_tower']) . '</td>';
-                                echo '<td class="py-2 px-2 small">' . htmlspecialchars($row['pic']) . '</td>';
-                                echo '<td class="py-2 px-2 small">' . htmlspecialchars($row['jumlah_lantai']) . '</td>';
+                // Data lain (Nama Tower, PIC, Jumlah Lantai)
+                echo '<td class="py-2 px-2 small">' . htmlspecialchars($row['nama_tower']) . '</td>';
+                echo '<td class="py-2 px-2 small">' . htmlspecialchars($row['pic']) . '</td>';
+                echo '<td class="py-2 px-2 small">' . htmlspecialchars($row['jumlah_lantai']) . '</td>';
 
-                                // Tombol untuk Halaman Selanjutnya
-                                echo '<td class="py-2 px-2 text-center">';
-                                echo '<a href="Formulir_Audit.php?id_tower=' . htmlspecialchars($row['id_tower']) . '" class="btn btn-success btn-sm">';
-                                echo '<i class="bi bi-arrow-right-circle"></i> Isi Data Lain';
-                                echo '</a>';
-                                echo '</td>';
+                // Tombol untuk Halaman Selanjutnya
+                echo '<td class="py-2 px-2 text-center">';
+                echo '<a href="Formulir_Audit.php?id_tower=' . htmlspecialchars($row['id_tower']) . '" class="btn btn-success btn-sm">';
+                echo '<i class="bi bi-arrow-right-circle"></i> Isi Data Lain';
+                echo '</a>';
+                echo '</td>';
 
-                                echo '</tr>';
-                            }
-                        } else {
-                            echo '<tr>';
-                            echo '<td colspan="7" class="text-center py-2 px-2 small">Tidak ada data tersedia.</td>';
-                            echo '</tr>';
-                        }
-                        ?>
+                echo '</tr>';
+              }
+            } else {
+              echo '<tr>';
+              echo '<td colspan="7" class="text-center py-2 px-2 small">Tidak ada data tersedia.</td>';
+              echo '</tr>';
+            }
+            ?>
         </tbody>
       </table>
     </div>
