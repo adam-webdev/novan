@@ -75,6 +75,7 @@ if (isset($_GET['id_gedung'])) {
     LEFT JOIN komponen ON audit_komponen.id_komponen = komponen.id_komponen
 
     WHERE audit_komponen.id_gedung = ?
+    ORDER BY komponen.id_komponen ASC
 ";
   // Eksekusi query
   $stmt = $conn->prepare($sql);
@@ -115,7 +116,7 @@ if (isset($_GET['id_gedung'])) {
 
     // Tampilkan hasil data
     // echo '<pre>';
-    // print_r($komp_keterangan);
+    // print_r($lift_komp);
     // echo '</pre>';
     // die();
   } else {
@@ -142,63 +143,114 @@ try {
   $sheetUtama->setCellValue('C4', ' : ' . $address);
   $sheetUtama->setCellValue('F3', ' : ALL UNIT');
   $sheetUtama->setCellValue('F4', ' : ' . $gedung_created_at);
-  // Baris yang ingin Anda salin
-  $sourceCell = 'G9';
-  $startColumn = 'H';
 
-  // Sheet Utama
-  $lift_number = 11;
-  $index = 0;
+  $targetCell = 'G'; // Kolom target awal
+  $headerRowTop = 8; // Baris untuk header lift
+  $headerRow = 9; // Baris untuk header lift
+  $dataStartRow = 12; // Baris awal untuk data lift
+  $index = 0; // Untuk menghitung kolom target
 
   foreach ($lift as $nama_lift => $dataLift) {
-    // sheetUtama Defet Keseluruhan
-    // urutkan huruf h,i,j,k dst.. sesuai data lift
-    $sheetUtama->setCellValue($sourceCell . $lift_number, $nama_lift);
-    $sheetUtama->getStyle($sourceCell . $lift_number)->getFont()->setBold(true);
+    // Tentukan kolom target untuk setiap lift (G, H, I, dst.)
+    $targetColumn = chr(ord($targetCell) + $index++);
 
-    $targetColumn = chr(ord($startColumn) + $index++);
-    $targetCell = "{$targetColumn}9";
-    $sourceValues = $sheetUtama->rangeToArray($sourceCell, null, true, true, true);
-    $sheetUtama->fromArray($sourceValues, null, "{$targetColumn}9");
-    // Salin style
 
-    $sheetUtama->duplicateStyle(
-      $sheetUtama->getStyle($sourceCell),
-      $targetCell
-    );
-    //  Merge cell untuk kolom tujuan
-    $sheetUtama->setCellValue('G9', $nama_lift);
-    // Ganti teks dengan nomor lift
-    $sheetUtama->setCellValue("{$targetColumn}9", $nama_lift);
+    // Set header lift di baris headerRow (baris 9)
+    $headerCellTop = "{$targetColumn}{$headerRowTop}";
+
+    $headerCell = "{$targetColumn}{$headerRow}";
+    $sheetUtama->getStyle("{$headerCellTop}:{$headerCell}")->applyFromArray([
+      'fill' => [
+        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+        'startColor' => ['argb' => 'AFEEEE'], // Warna kuning
+      ],
+      'alignment' => [
+        'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+        'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+      ],
+      'borders' => [
+        'allBorders' => [
+          'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+        ],
+      ],
+    ]);
+
+    // header
+    $sheetUtama->setCellValue($headerCell, $nama_lift);
+    $sheetUtama->setCellValue($headerCellTop, null);
+
+    $sheetUtama->getStyle($headerCell)->getFont()->setBold(true);
+    // auto filter
+    $sheetUtama->setAutoFilter("A9:{$targetColumn}{$headerRow}");
+
+    $currentRow = $dataStartRow;
+
     foreach ($dataLift as $komponen) {
-      if ($komponen['audit_komponen_keterangan'] == '') {
-        $sheet->setCellValue('G' . $row, 'V');
-      } else {
-        $sheet->setCellValue('G' . $row, $komponen['audit_komponen_keterangan']);
-      }
-      $lift_number++;
+      $dataCell = "{$targetColumn}{$currentRow}";
+      // Jika audit_komponen_keterangan kosong, isi dengan 'V', jika tidak, isi dengan data
+      $sheetUtama->setCellValue($dataCell, $komponen['audit_komponen_keterangan'] ?: 'V');
+      $currentRow++; // Pindah ke baris berikutnya
     }
   }
 
   $komp_number = 11;
+  $fillmesin = 10;
+  $no_sheet_utama = 1;
   foreach ($komp_keterangan as $i => $dataKeterangan) {
 
     // var_dump($row_number);
     $sheetUtama->setCellValue('B' . $komp_number, $i);
     $sheetUtama->getStyle('B' . $komp_number)->getFont()->setBold(true);
+    // backgroun mesin
+    $sheetUtama->getStyle("A{$fillmesin}:{$targetColumn}{$fillmesin}")->applyFromArray([
+      'borders' => [
+        'allBorders' => [
+          'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+        ],
+      ],
+      'fill' => [
+        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+        'startColor' => ['argb' => 'FFFF00'], // Warna kuning
+      ],
+      'font' => [
+        'color' => ['argb' => '000000'], // Warna font hitam
+      ],
+    ]);
+
+    // bakcground komponen
+    $sheetUtama->getStyle("A{$komp_number}:{$targetColumn}{$komp_number}")->applyFromArray([
+      'borders' => [
+        'allBorders' => [
+          'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+        ],
+      ],
+      'fill' => [
+        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+        'startColor' => ['argb' => 'FFFF00'], // Warna kuning
+      ],
+      'font' => [
+        'color' => ['argb' => '000000'], // Warna font hitam
+      ],
+    ]);
     $komp_number++;
 
     foreach ($dataKeterangan as $komponen) {
+      $sheetUtama->setCellValue('A' . $komp_number, $no_sheet_utama++);
       $sheetUtama->setCellValue('B' . $komp_number, $komponen['nama_komponen']);
       $sheetUtama->setCellValue('C' . $komp_number, $komponen['audit_komponen_prioritas']);
       $sheetUtama->setCellValue('D' . $komp_number, $komponen['audit_komponen_temuan']);
       $sheetUtama->setCellValue('E' . $komp_number, $komponen['audit_komponen_solusi']);
       $sheetUtama->setCellValue('F' . $komp_number, $komponen['audit_komponen_foto_bukti']);
+      $sheetUtama->getStyle("A{$komp_number}:F{$komp_number}")->applyFromArray([
+        'borders' => [
+          'allBorders' => [
+            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+          ],
+        ],
+      ]);
       $komp_number++;
     }
   }
-
-
   $templateSheet = $spreadsheet->getSheetByName('example');
   $templateSheet->setCellValue('C3', ' : ' . $nama_gedung);
   $templateSheet->setCellValue('C4', ' : ' . $address);
@@ -214,20 +266,30 @@ try {
     $spreadsheet->addSheet($sheet);
 
     $row = 11;
+    $no = 1;
+
     foreach ($dataLift as $keterangan => $dataKomponen) {
-
-
       // sheet by lift
-      $sheet->setCellValue('B10', 'MESIN ROOM');
-      $sheet->getStyle('B10')->getFont()->setBold(true);
+      $sheet->getStyle("A{$row}:G{$row}")->applyFromArray([
+        'borders' => [
+          'allBorders' => [
+            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+          ],
+        ],
+        'fill' => [
+          'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+          'startColor' => ['argb' => 'FFFF00'], // Warna kuning
+        ],
+        'font' => [
+          'color' => ['argb' => '000000'], // Warna font hitam
+        ],
+      ]);
       $sheet->setCellValue('B' . $row, $keterangan);
       $sheet->getStyle('B' . $row)->getFont()->setBold(true);
       $row++;
-
       foreach ($dataKomponen as $komponen) {
-
-
-        // sheet by lift
+        // sheet by lift komponen group
+        $sheet->setCellValue('A' . $row, $no++);
         $sheet->setCellValue('B' . $row, $komponen['nama_komponen']);
         $sheet->setCellValue('C' . $row, $komponen['audit_komponen_prioritas']);
         $sheet->setCellValue('D' . $row, $komponen['audit_komponen_temuan']);
@@ -238,6 +300,16 @@ try {
         } else {
           $sheet->setCellValue('G' . $row, $komponen['audit_komponen_keterangan']);
         }
+
+        // Terapkan all border pada baris yang baru saja diisi
+        $sheet->getStyle("A{$row}:G{$row}")->applyFromArray([
+          'borders' => [
+            'allBorders' => [
+              'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+            ],
+          ],
+        ]);
+
         $row++;
       }
     }
