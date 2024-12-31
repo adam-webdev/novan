@@ -251,13 +251,14 @@ try {
       $komp_number++;
     }
   }
+
   $templateSheet = $spreadsheet->getSheetByName('example');
   $templateSheet->setCellValue('C3', ' : ' . $nama_gedung);
   $templateSheet->setCellValue('C4', ' : ' . $address);
-  $templateSheet->setCellValue('F3', ' : ' . $lift_no);
   $templateSheet->setCellValue('F4', ' : ' . $gedung_created_at);
 
   foreach ($lift_komp as $i => $dataLift) {
+    $templateSheet->setCellValue('F3', ' : ' . $i);
 
     $sheet = clone $templateSheet;
     $sheet->setTitle($i);
