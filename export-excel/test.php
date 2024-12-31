@@ -77,7 +77,6 @@ if (isset($_GET['id_gedung'])) {
     WHERE audit_komponen.id_gedung = ?
 ";
   // Eksekusi query
-  $id = 30;
   $stmt = $conn->prepare($sql);
   $stmt->bind_param('i', $id_gedung);
   $stmt->execute();
@@ -86,37 +85,39 @@ if (isset($_GET['id_gedung'])) {
   if ($results->num_rows > 0) {
     // Proses hasil query menjadi array
     $data = [];
+    $lift_komp = [];
     $lift = [];
     $komp_keterangan = [];
-    // foreach ($komponenData as $komponen) {
-    //   $groupedData[$komponen['keterangan']][] = $komponen;
-    // }
 
     while ($row = $results->fetch_assoc()) {
       // Menambahkan semua data ke array $data
       $data[] = $row;
 
+
       // Ambil keterangan dan no_lift
       $keterangan = $row['komponen_keterangan'];
       $no_lift = $row['lift_no'];
 
+      $komp_keterangan[$keterangan][] = $row;
+      $lift[$no_lift][] = $row;
       // Jika sudah ada lift dengan nomor yang sama, tambahkan entri keterangan baru
-      if (!isset($lift[$no_lift])) {
-        $lift[$no_lift] = [];
+      if (!isset($lift_komp[$no_lift])) {
+        $lift_komp[$no_lift] = [];
       }
 
       // Menambahkan data ke keterangan yang sesuai
-      if (!isset($lift[$no_lift][$keterangan])) {
-        $lift[$no_lift][$keterangan] = [];
+      if (!isset($lift_komp[$no_lift][$keterangan])) {
+        $lift_komp[$no_lift][$keterangan] = [];
       }
       // Tambahkan row ke dalam keterangan
-      $lift[$no_lift][$keterangan][] = $row;
+      $lift_komp[$no_lift][$keterangan][] = $row;
     }
 
     // Tampilkan hasil data
     // echo '<pre>';
-    // print_r($lift);
+    // print_r($komp_keterangan);
     // echo '</pre>';
+    // die();
   } else {
     echo "Data tidak ditemukan.";
   }
@@ -124,8 +125,6 @@ if (isset($_GET['id_gedung'])) {
   // Cek hasil
 
 }
-
-
 try {
   // 1. Buat spreadsheet baru
 
@@ -134,43 +133,101 @@ try {
   $sheetUtama = $spreadsheet->getSheet(0);
   $sheetUtama->setTitle('Defect Keseluruhan');
 
-  $templateSheet = $spreadsheet->getSheetByName('example');
   $nama_gedung = $data[0]['nama_gedung'];
   $address = $data[0]['address'];
   $gedung_created_at = $data[0]['gedung_created_at'];
   $lift_no = $data[0]['lift_no'];
 
+  $sheetUtama->setCellValue('C3', ' : ' . $nama_gedung);
+  $sheetUtama->setCellValue('C4', ' : ' . $address);
+  $sheetUtama->setCellValue('F3', ' : ALL UNIT');
+  $sheetUtama->setCellValue('F4', ' : ' . $gedung_created_at);
+  // Baris yang ingin Anda salin
+  $sourceCell = 'G9';
+  $startColumn = 'H';
+
+  // Sheet Utama
+  $lift_number = 11;
+  $index = 0;
+
+  foreach ($lift as $nama_lift => $dataLift) {
+    // sheetUtama Defet Keseluruhan
+    // urutkan huruf h,i,j,k dst.. sesuai data lift
+    $sheetUtama->setCellValue($sourceCell . $lift_number, $nama_lift);
+    $sheetUtama->getStyle($sourceCell . $lift_number)->getFont()->setBold(true);
+
+    $targetColumn = chr(ord($startColumn) + $index++);
+    $targetCell = "{$targetColumn}9";
+    $sourceValues = $sheetUtama->rangeToArray($sourceCell, null, true, true, true);
+    $sheetUtama->fromArray($sourceValues, null, "{$targetColumn}9");
+    // Salin style
+
+    $sheetUtama->duplicateStyle(
+      $sheetUtama->getStyle($sourceCell),
+      $targetCell
+    );
+    //  Merge cell untuk kolom tujuan
+    $sheetUtama->setCellValue('G9', $nama_lift);
+    // Ganti teks dengan nomor lift
+    $sheetUtama->setCellValue("{$targetColumn}9", $nama_lift);
+    foreach ($dataLift as $komponen) {
+      if ($komponen['audit_komponen_keterangan'] == '') {
+        $sheet->setCellValue('G' . $row, 'V');
+      } else {
+        $sheet->setCellValue('G' . $row, $komponen['audit_komponen_keterangan']);
+      }
+      $lift_number++;
+    }
+  }
+
+  $komp_number = 11;
+  foreach ($komp_keterangan as $i => $dataKeterangan) {
+
+    // var_dump($row_number);
+    $sheetUtama->setCellValue('B' . $komp_number, $i);
+    $sheetUtama->getStyle('B' . $komp_number)->getFont()->setBold(true);
+    $komp_number++;
+
+    foreach ($dataKeterangan as $komponen) {
+      $sheetUtama->setCellValue('B' . $komp_number, $komponen['nama_komponen']);
+      $sheetUtama->setCellValue('C' . $komp_number, $komponen['audit_komponen_prioritas']);
+      $sheetUtama->setCellValue('D' . $komp_number, $komponen['audit_komponen_temuan']);
+      $sheetUtama->setCellValue('E' . $komp_number, $komponen['audit_komponen_solusi']);
+      $sheetUtama->setCellValue('F' . $komp_number, $komponen['audit_komponen_foto_bukti']);
+      $komp_number++;
+    }
+  }
+
+
+  $templateSheet = $spreadsheet->getSheetByName('example');
   $templateSheet->setCellValue('C3', ' : ' . $nama_gedung);
   $templateSheet->setCellValue('C4', ' : ' . $address);
   $templateSheet->setCellValue('F3', ' : ' . $lift_no);
   $templateSheet->setCellValue('F4', ' : ' . $gedung_created_at);
 
+  foreach ($lift_komp as $i => $dataLift) {
 
-  foreach ($lift as $i => $dataLift) {
-    // if (empty($dataLift) || $i === 0) {
-    //   continue; // Lewati lift kosong atau tidak valid
-    // }
-
-    // Tampilkan hasil data
     $sheet = clone $templateSheet;
     $sheet->setTitle($i);
 
     // Tambahkan sheet ke spreadsheet
     $spreadsheet->addSheet($sheet);
 
-
-
     $row = 11;
     foreach ($dataLift as $keterangan => $dataKomponen) {
 
+
+      // sheet by lift
       $sheet->setCellValue('B10', 'MESIN ROOM');
       $sheet->getStyle('B10')->getFont()->setBold(true);
-
       $sheet->setCellValue('B' . $row, $keterangan);
       $sheet->getStyle('B' . $row)->getFont()->setBold(true);
-
       $row++;
+
       foreach ($dataKomponen as $komponen) {
+
+
+        // sheet by lift
         $sheet->setCellValue('B' . $row, $komponen['nama_komponen']);
         $sheet->setCellValue('C' . $row, $komponen['audit_komponen_prioritas']);
         $sheet->setCellValue('D' . $row, $komponen['audit_komponen_temuan']);
@@ -186,14 +243,6 @@ try {
     }
   }
 
-
-
-  // Menyimpan file Excel
-  // $writer = new Xlsx($spreadsheet);
-  // header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  // header('Content-Disposition: attachment;filename="Temuan_Audit.xlsx"');
-  // header('Cache-Control: max-age=0');
-  // $writer->save('php://output');
   $fileName = 'audit.xlsx';
   $writer = new Xlsx($spreadsheet);
   $writer->save($fileName);
@@ -203,12 +252,6 @@ try {
     $spreadsheet->getIndex($templateSheet)
   );
   exit();
-  // 3. Export data ke file Excel
-  // $fileName = 'Temuan_Audit.xlsx';
-  // $writer = new Xlsx($spreadsheet);
-  // $writer->save($fileName);
-
-  // echo "File Excel berhasil dibuat: <a href='$fileName' download>Download</a>";
 } catch (Exception $e) {
   echo "Terjadi kesalahan: " . $e->getMessage();
 }
