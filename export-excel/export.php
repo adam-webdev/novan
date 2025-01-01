@@ -76,7 +76,7 @@ if (isset($_GET['id_gedung'])) {
 
     WHERE audit_komponen.id_gedung = ?
     ORDER BY komponen.id_komponen ASC
-";
+  ";
   // Eksekusi query
   $stmt = $conn->prepare($sql);
   $stmt->bind_param('i', $id_gedung);
@@ -89,9 +89,12 @@ if (isset($_GET['id_gedung'])) {
     $lift_komp = [];
     $lift = [];
     $komp_keterangan = [];
+    $komp_keterangan_tes = [];
 
+    $test = [];
     while ($row = $results->fetch_assoc()) {
       // Menambahkan semua data ke array $data
+
       $data[] = $row;
 
 
@@ -113,12 +116,6 @@ if (isset($_GET['id_gedung'])) {
       // Tambahkan row ke dalam keterangan
       $lift_komp[$no_lift][$keterangan][] = $row;
     }
-
-    // Tampilkan hasil data
-    // echo '<pre>';
-    // print_r($lift_komp);
-    // echo '</pre>';
-    // die();
   } else {
     echo "Data tidak ditemukan.";
   }
@@ -150,7 +147,9 @@ try {
   $dataStartRow = 12; // Baris awal untuk data lift
   $index = 0; // Untuk menghitung kolom target
 
+  $data_lift = [];
   foreach ($lift as $nama_lift => $dataLift) {
+    $data_lift[] = $nama_lift;
     // Tentukan kolom target untuk setiap lift (G, H, I, dst.)
     $targetColumn = chr(ord($targetCell) + $index++);
 
@@ -159,6 +158,8 @@ try {
     $headerCellTop = "{$targetColumn}{$headerRowTop}";
 
     $headerCell = "{$targetColumn}{$headerRow}";
+
+
     $sheetUtama->getStyle("{$headerCellTop}:{$headerCell}")->applyFromArray([
       'fill' => [
         'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
@@ -185,74 +186,107 @@ try {
 
     $currentRow = $dataStartRow;
 
-    foreach ($dataLift as $komponen) {
-      $dataCell = "{$targetColumn}{$currentRow}";
-      // Jika audit_komponen_keterangan kosong, isi dengan 'V', jika tidak, isi dengan data
-      $sheetUtama->setCellValue($dataCell, $komponen['audit_komponen_keterangan'] ?: 'V');
-      $currentRow++; // Pindah ke baris berikutnya
-    }
-  }
 
-  $komp_number = 11;
-  $fillmesin = 10;
-  $no_sheet_utama = 1;
-  foreach ($komp_keterangan as $i => $dataKeterangan) {
+    $komp_number = 11;
+    $fillmesin = 10;
+    $no_sheet_utama = 1;
 
-    // var_dump($row_number);
-    $sheetUtama->setCellValue('B' . $komp_number, $i);
-    $sheetUtama->getStyle('B' . $komp_number)->getFont()->setBold(true);
-    // backgroun mesin
-    $sheetUtama->getStyle("A{$fillmesin}:{$targetColumn}{$fillmesin}")->applyFromArray([
-      'borders' => [
-        'allBorders' => [
-          'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-        ],
-      ],
-      'fill' => [
-        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-        'startColor' => ['argb' => 'FFFF00'], // Warna kuning
-      ],
-      'font' => [
-        'color' => ['argb' => '000000'], // Warna font hitam
-      ],
-    ]);
+    $indexKomponen = 0; // Untuk menghitung kolom target
+    $komp_number_utama = 11;
+    $targetCellKomponen = 'G';
+    // Kolom target awal
 
-    // bakcground komponen
-    $sheetUtama->getStyle("A{$komp_number}:{$targetColumn}{$komp_number}")->applyFromArray([
-      'borders' => [
-        'allBorders' => [
-          'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-        ],
-      ],
-      'fill' => [
-        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-        'startColor' => ['argb' => 'FFFF00'], // Warna kuning
-      ],
-      'font' => [
-        'color' => ['argb' => '000000'], // Warna font hitam
-      ],
-    ]);
-    $komp_number++;
-
-    foreach ($dataKeterangan as $komponen) {
-      $sheetUtama->setCellValue('A' . $komp_number, $no_sheet_utama++);
-      $sheetUtama->setCellValue('B' . $komp_number, $komponen['nama_komponen']);
-      $sheetUtama->setCellValue('C' . $komp_number, $komponen['audit_komponen_prioritas']);
-      $sheetUtama->setCellValue('D' . $komp_number, $komponen['audit_komponen_temuan']);
-      $sheetUtama->setCellValue('E' . $komp_number, $komponen['audit_komponen_solusi']);
-      $sheetUtama->setCellValue('F' . $komp_number, $komponen['audit_komponen_foto_bukti']);
-      $sheetUtama->getStyle("A{$komp_number}:F{$komp_number}")->applyFromArray([
+    foreach ($komp_keterangan as $i => $dataKeterangan) {
+      $sheetUtama->setCellValue('B' . $komp_number, $i);
+      $sheetUtama->getStyle('B' . $komp_number)->getFont()->setBold(true);
+      // backgroun mesin
+      $sheetUtama->getStyle("A{$fillmesin}:{$targetColumn}{$fillmesin}")->applyFromArray([
         'borders' => [
           'allBorders' => [
             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
           ],
         ],
+        'fill' => [
+          'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+          'startColor' => ['argb' => 'FFFF00'], // Warna kuning
+        ],
+        'font' => [
+          'color' => ['argb' => '000000'], // Warna font hitam
+        ],
+      ]);
+
+      // bakcground komponen
+      $sheetUtama->getStyle("A{$komp_number}:{$targetColumn}{$komp_number}")->applyFromArray([
+        'borders' => [
+          'allBorders' => [
+            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+          ],
+        ],
+        'fill' => [
+          'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+          'startColor' => ['argb' => 'FFFF00'], // Warna kuning
+        ],
+        'font' => [
+          'color' => ['argb' => '000000'], // Warna font hitam
+        ],
       ]);
       $komp_number++;
+
+      foreach ($dataKeterangan as $komponen) {
+        $sheetUtama->setCellValue('A' . $komp_number, $no_sheet_utama++);
+        $sheetUtama->setCellValue('B' . $komp_number, $komponen['nama_komponen']);
+        $sheetUtama->setCellValue('C' . $komp_number, $komponen['audit_komponen_prioritas']);
+        $sheetUtama->setCellValue('D' . $komp_number, $komponen['audit_komponen_temuan']);
+        $sheetUtama->setCellValue('E' . $komp_number, $komponen['audit_komponen_solusi']);
+        $sheetUtama->setCellValue('F' . $komp_number, $komponen['audit_komponen_foto_bukti']);
+
+        // Tentukan posisi lift yang sesuai (kolom G dan H)
+        $col = 'G'; // Kolom pertama untuk data lift (PRIVATE)
+        $lift_written = false; // Menandai apakah data lift sudah ditulis
+
+        // Loop untuk data lift sesuai dengan lift_no pada komponen
+        foreach ($lift as $lift_no => $lift_items) {
+          // Cek jika lift_no sesuai dengan item
+          if ($komponen['lift_no'] == $lift_no) {
+            // Menulis informasi lift pada kolom yang sesuai
+            $sheetUtama->setCellValue($col . $komp_number, $komponen['audit_komponen_keterangan']); // Menulis komponen yang sesuai dengan lift
+            $lift_written = true;
+          }
+          $col++; // Berpindah ke kolom berikutnya
+        }
+
+        // Jika lift tidak ditemukan di data yang ada, kosongkan kolom
+        if (!$lift_written) {
+          $sheetUtama->setCellValue($col . $komp_number, 'V'); // Menyisakan kolom kosong jika tidak ada lift yang sesuai
+        }
+
+
+        // $dataCellKomp = "{$targetColumnKomponen}{$komp_number}";
+        // var_dump($dataCellKomp);
+
+        // // var_dump(count($lift_komp));
+        // // echo '<pre>';
+        // // print_r($targetColumnKomponen);
+        // // echo '</pre>';
+        // // print_r($value['audit_komponen_keterangan']);
+        // if ($komponen['audit_komponen_keterangan'] == '') {
+        //   $sheetUtama->setCellValue($dataCellKomp, 'V');
+        // } else {
+        //   $sheetUtama->setCellValue($dataCellKomp, $komponen['audit_komponen_keterangan']);
+        // }
+        $sheetUtama->getStyle("A{$komp_number}:{$targetColumn}{$komp_number}")->applyFromArray([
+          'borders' => [
+            'allBorders' => [
+              'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+            ],
+          ],
+        ]);
+        $komp_number++;
+      }
     }
   }
 
-  $templateSheet = $spreadsheet->getSheetByName('example');
+  $templateSheet = $spreadsheet->getSheetByName('template');
   $templateSheet->setCellValue('C3', ' : ' . $nama_gedung);
   $templateSheet->setCellValue('C4', ' : ' . $address);
   $templateSheet->setCellValue('F4', ' : ' . $gedung_created_at);
@@ -319,8 +353,7 @@ try {
   $fileName = 'audit.xlsx';
   $writer = new Xlsx($spreadsheet);
   $writer->save($fileName);
-
-  echo "File Excel berhasil dibuat: <a href='$fileName' download>Download</a>";
+  echo "Export Berhasil silahkan download file. <a href='$fileName' download>Download</a>";
   $spreadsheet->removeSheetByIndex(
     $spreadsheet->getIndex($templateSheet)
   );

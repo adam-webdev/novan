@@ -178,7 +178,7 @@ if (isset($_GET['id_gedung'])) {
 
     <div class="btn-group btn-sm mb-3" role="group" aria-label="Export Buttons">
       <!-- Tombol Export Excel -->
-      <a href="../../../SINERGI/export-excel/test.php?id_gedung=<?= $id_gedung ?>">
+      <a href="../../../SINERGI/export-excel/export.php?id_gedung=<?= $id_gedung ?>" target="_blank">
         <button id="exportExcel" class="btn btn-success btn-sm" title="Export to Excel"><i
             class="fas fa-file-excel"></i></button>
       </a>

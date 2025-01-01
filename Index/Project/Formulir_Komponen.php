@@ -165,49 +165,49 @@ $temuan_result = $conn->query($temuan_query);
     </div>
 
     <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const tableBody = document.querySelector("#temporaryTable tbody");
-        const addToTableBtn = document.querySelector("#addToTable");
-        const saveDataBtn = document.querySelector("#saveData");
+    document.addEventListener("DOMContentLoaded", () => {
+      const tableBody = document.querySelector("#temporaryTable tbody");
+      const addToTableBtn = document.querySelector("#addToTable");
+      const saveDataBtn = document.querySelector("#saveData");
 
-        let dataAll = [];
+      let dataAll = [];
 
-        addToTableBtn.addEventListener("click", () => {
+      addToTableBtn.addEventListener("click", () => {
 
-          const id_lift = document.querySelector("#id_lift").value;
-          const id_gedung = document.querySelector("#id_gedung").value;
-          const id_tower = document.querySelector("#id_tower").value;
-          const komponen = document.querySelector("#komponen").value;
-          const komponenText = document.querySelector("#komponen option:checked").textContent;
-          const temuan = document.querySelector("#temuan").value;
-          const temuanText = document.querySelector("#temuan option:checked").textContent;
-          const solusi = document.querySelector("#solusi").value;
-          const solusiText = document.querySelector("#solusi option:checked").textContent;
-          const prioritas = document.querySelector("#prioritas").value;
-          const prioritasText = document.querySelector("#prioritas option:checked").textContent;
-          const keterangan = document.querySelector("#keterangan").value;
-          const fotoInput = document.querySelector("#foto_bukti");
-          const fotoFile = fotoInput.files[0];
+        const id_lift = document.querySelector("#id_lift").value;
+        const id_gedung = document.querySelector("#id_gedung").value;
+        const id_tower = document.querySelector("#id_tower").value;
+        const komponen = document.querySelector("#komponen").value;
+        const komponenText = document.querySelector("#komponen option:checked").textContent;
+        const temuan = document.querySelector("#temuan").value;
+        const temuanText = document.querySelector("#temuan option:checked").textContent;
+        const solusi = document.querySelector("#solusi").value;
+        const solusiText = document.querySelector("#solusi option:checked").textContent;
+        const prioritas = document.querySelector("#prioritas").value;
+        const prioritasText = document.querySelector("#prioritas option:checked").textContent;
+        const keterangan = document.querySelector("#keterangan").value;
+        const fotoInput = document.querySelector("#foto_bukti");
+        const fotoFile = fotoInput.files[0];
 
 
-          const data = {
-            id_lift,
-            id_gedung,
-            id_tower,
-            komponen,
-            temuan,
-            solusi,
-            prioritasText,
-            keterangan,
-            foto: fotoFile
-          };
+        const data = {
+          id_lift,
+          id_gedung,
+          id_tower,
+          komponen,
+          temuan,
+          solusi,
+          prioritasText,
+          keterangan,
+          foto: fotoFile
+        };
 
-          if (!komponen || !temuan || !solusi || !prioritas) {
-            alert("Mohon lengkapi semua field.");
-            return;
-          }
-          dataAll.push(data);
-          const row = `
+        if (!komponen || !temuan || !solusi || !prioritas) {
+          alert("Mohon lengkapi semua field.");
+          return;
+        }
+        dataAll.push(data);
+        const row = `
                 <tr>
                     <td>${komponenText}<input type="hidden" name="id_komponen" value="${komponen}"></td>
                     <td>${temuanText}<input type="hidden" name="id_temuan" value="${temuan}"></td>
@@ -217,54 +217,54 @@ $temuan_result = $conn->query($temuan_query);
                     <td>${fotoFile ? fotoFile.name : "Tidak ada foto"}<input type="hidden" name="foto_bukti" value="${fotoFile ? fotoFile.name : ''}"></td>
                     <td><button class="btn btn-danger btn-sm deleteRow">Hapus</button></td>
                 </tr>`;
-          tableBody.insertAdjacentHTML("beforeend", row);
-          document.querySelector("#komponenForm").reset();
-        });
-
-        saveDataBtn.addEventListener("click", () => {
-          // const rows = [...tableBody.querySelectorAll("tr")];
-          if (dataAll.length === 0) {
-            alert("Tidak ada data untuk disimpan.");
-            return;
-          }
-
-          const formData = new FormData();
-          dataAll.forEach((row, index) => {
-            formData.append(`data[${index}][id_lift]`, row.id_lift);
-            formData.append(`data[${index}][id_gedung]`, row.id_gedung);
-            formData.append(`data[${index}][id_tower]`, row.id_tower);
-            formData.append(`data[${index}][komponen]`, row.komponen);
-            formData.append(`data[${index}][temuan]`, row.temuan);
-            formData.append(`data[${index}][solusi]`, row.solusi);
-            formData.append(`data[${index}][prioritasText]`, row.prioritasText);
-            formData.append(`data[${index}][keterangan]`, row.keterangan)
-
-            if (row.foto) {
-              formData.append(`data[${index}][foto]`, row.foto)
-            }
-          })
-          // Cek isi formData dengan iterasi
-          // for (let [key, value] of formData.entries()) {
-          //   console.log(key, value);
-          // }
-          fetch("Proses/proses_formulir_komponen.php", {
-              method: "POST",
-              body: formData,
-            })
-            .then((response) => response.json())
-            .then((result) => {
-              alert(result.message);
-              if (result.status === "success") {
-                tableBody.innerHTML = "";
-              }
-
-            })
-            .catch((error) => {
-              console.error(error);
-              alert("Terjadi kesalahan.");
-            });
-        });
+        tableBody.insertAdjacentHTML("beforeend", row);
+        document.querySelector("#komponenForm").reset();
       });
+
+      saveDataBtn.addEventListener("click", () => {
+        // const rows = [...tableBody.querySelectorAll("tr")];
+        if (dataAll.length === 0) {
+          alert("Tidak ada data untuk disimpan.");
+          return;
+        }
+
+        const formData = new FormData();
+        dataAll.forEach((row, index) => {
+          formData.append(`data[${index}][id_lift]`, row.id_lift);
+          formData.append(`data[${index}][id_gedung]`, row.id_gedung);
+          formData.append(`data[${index}][id_tower]`, row.id_tower);
+          formData.append(`data[${index}][komponen]`, row.komponen);
+          formData.append(`data[${index}][temuan]`, row.temuan);
+          formData.append(`data[${index}][solusi]`, row.solusi);
+          formData.append(`data[${index}][prioritasText]`, row.prioritasText);
+          formData.append(`data[${index}][keterangan]`, row.keterangan)
+
+          if (row.foto) {
+            formData.append(`data[${index}][foto]`, row.foto)
+          }
+        })
+        // Cek isi formData dengan iterasi
+        // for (let [key, value] of formData.entries()) {
+        //   console.log(key, value);
+        // }
+        fetch("Proses/proses_formulir_komponen.php", {
+            method: "POST",
+            body: formData,
+          })
+          .then((response) => response.json())
+          .then((result) => {
+            alert(result.message);
+            if (result.status === "success") {
+              tableBody.innerHTML = "";
+            }
+
+          })
+          .catch((error) => {
+            console.error(error);
+            alert("Terjadi kesalahan.");
+          });
+      });
+    });
     </script>
 
 
@@ -282,16 +282,16 @@ $temuan_result = $conn->query($temuan_query);
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
-      $(document).ready(function() {
-        // Inisialisasi Select2 tanpa fitur hapus pilihan (clear)
-        $('.select2').select2({
-          theme: 'bootstrap-5',
-          placeholder: function() {
-            return $(this).data('placeholder');
-          },
-          allowClear: false // Nonaktifkan tombol silang untuk menghapus pilihan
-        });
+    $(document).ready(function() {
+      // Inisialisasi Select2 tanpa fitur hapus pilihan (clear)
+      $('.select2').select2({
+        theme: 'bootstrap-5',
+        placeholder: function() {
+          return $(this).data('placeholder');
+        },
+        allowClear: false // Nonaktifkan tombol silang untuk menghapus pilihan
       });
+    });
     </script>
 </body>
 
